@@ -14,75 +14,83 @@
                 appName:'sandbox' // Your Usergrid app name
             });
 
-            // Reading data
             var books = new Usergrid.Collection({ "client":client, "type":"books" });
-            books.fetch(
-                function() { // Success
-                    while(books.hasNextEntity()) {
-                        var book = books.getNextEntity();
-                        console.log(book.get("title"));
-                        $("#books-list").append('<li><a href="#book-details-view" data-transition="slide"><h3>'+ book.get("title") + '</h3><p>'+ book.get("author") + '</p></a></li>');
+            $(document).on('pageinit', function(){
+                  $('#create-button').bind('click', createBook);
+                  loadBooks();
+            });
+
+            function loadBooks () {
+                
+                books.fetch( // Actual network call
+
+                    // Success Callback
+                    function () {
+                        $('#books-list').empty();
+                        
+                        while ( books.hasNextEntity() ) {
+                            var book = books.getNextEntity();
+                            console.log(book.get("title"));
+                            $("#books-list").append('<li><a href="#book-details-view" data-transition="slide"><h3>'+ book.get("title") + '</h3><p>'+ book.get("author") + '</p></a></li>');
+                        }
+                        
+                        // Re-apply jQuery Mobile styles
+                        $('#books-list').listview('refresh');
+                    },
+
+                    // Failure Callback
+                    function () { alert("read failed"); }
+                );
+            }
+
+            function createBook() {
+                new_book = { "title":$("#title-field").val(),
+                             "author":$("#author-field").val() };
+
+                books.addEntity(new_book, function (error, response) {
+                    if (error) {
+                        alert('write failed');
+                    } else {
+                        $("#title-field").val(""), $("#author-field").val("");
+                        loadBooks();
+                        history.back();
                     }
-                    $("#books-list").listview("refresh");
-
-                }, function() { // Failure
-                    console.log("Read failed");
-                }
-            );
-            
+                });
+            }
 
 
-            // Uncomment the next 4 lines if you want to write data
-
-            // book = { "title": "the old man and the sea" };
-            // books.addEntity(book, function (error, response) {
-            //  if (error) { alert("write failed");
-            //  } else { alert("write succeeded"); } });
         </script>
     </head>
 
     </head>
     <body>
-        <div data-role="page" data-theme="c" id="page-books-list">
-            <div data-role="header" data-theme="b">
-                <h1>My Books</h1>
-                <a id="btn-compose" data-icon="plus" data-iconpos="right" data-inline="true" data-role="button" class="ui-btn-right">Add</a>
-            </div>
+      <div data-role="page" data-theme="c" id="page-books-list">
+          <div data-role="header" data-theme="b">
+              <h1>My Books</h1>
+              <a href="#add-book-page" id="btn-compose" data-icon="plus" data-iconpos="right" data-inline="true" data-role="button" class="ui-btn-right" data-rel="dialog">Add</a>
+          </div>
 
+          <div data-role="content">
+              <ul id="books-list" data-role="listview" data-inset="false"></ul>
+          </div>
+      </div>
+      <div data-role="page" data-control-title="add-book-page" id="add-book-page">
+            <div data-theme="b" data-role="header">
+                <h3>
+                    Add Book
+                </h3>
+            </div>
             <div data-role="content">
-                <ul id="books-list" data-role="listview" data-inset="false"></ul>
+                <form>
+                    <label for="title-field">Title</label>
+                    <input id="title-field"></input>
+                    <label for="author-field">Author</label>
+                    <input id="author-field"></input>
+                </form>    
+                <a data-rel="back" data-role="button" data-theme="c" data-inline="true">Cancel</a>
+                <button data-theme="b" id="create-button" data-inline="true">Create</button>
             </div>
-        </div>
-        <div data-role="page" data-control-title="book-deails-view" id="book-details-view">
-
-      <div data-theme="b" data-role="header">
-          <a data-role="button" href="#page-books-list" class="ui-btn-left" data-transition="slide">
-              Back
-          </a>
-          <h3>
-              Book Information
-          </h3>
       </div>
-      <div data-role="content">
-          <div style="width: 288px; height: 200px; position: relative; background-color: #fbfbfb; border: 1px solid #b8b8b8;"
-          data-controltype="image" id="book-image">
-              <img src="https://codiqa.com/static/images/v2/image.png" alt="image" style="position: absolute; top: 50%; left: 50%; margin-left: -16px; margin-top: -18px">
-          </div>
-          <div data-controltype="textblock">
-              <p>
-                  <b>
-                      
-                  </b>
-              </p>
-          </div>
-          <div data-controltype="textblock">
-              <p>
-                  <b>
-                      
-                  </b>
-              </p>
-          </div>
-      </div>
-  </div>
+     
     </body>
 </html>
